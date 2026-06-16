@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/docs/BACKEND_ANALYSIS.md
+/docs/ExpenseTracker_Complete_API.postman_collection.json
+/docs/FLUTTER_ARCHITECTURE.md
+/docs/FRONTEND_INTEGRATION_GUIDE.md
+/docs/MOBILE_API_REFERENCE.md
