@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../config/dev_flags.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/errors/network_exception.dart';
 import '../../../../services/secure_storage_service.dart';
@@ -74,6 +75,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthRestoreSession event,
     Emitter<AuthState> emit,
   ) async {
+    if (kBypassAuth) {
+      emit(AuthAuthenticated(UserModel.fromJson(devUserJson)));
+      return;
+    }
     emit(AuthLoading());
     try {
       final accessToken = await _storage.getAccessToken();

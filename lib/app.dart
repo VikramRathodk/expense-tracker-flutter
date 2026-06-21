@@ -7,6 +7,24 @@ import 'core/constants/api_constants.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/budgets/data/datasources/budget_remote_datasource.dart';
+import 'features/budgets/data/repositories/budget_repository_impl.dart';
+import 'features/budgets/presentation/cubit/budget_form_cubit.dart';
+import 'features/budgets/presentation/cubit/budget_list_cubit.dart';
+import 'features/categories/data/datasources/category_remote_datasource.dart';
+import 'features/categories/data/repositories/category_repository_impl.dart';
+import 'features/categories/presentation/cubit/category_cubit.dart';
+import 'features/dashboard/data/datasources/dashboard_remote_datasource.dart';
+import 'features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'features/expenses/data/datasources/expense_remote_datasource.dart';
+import 'features/expenses/data/repositories/expense_repository_impl.dart';
+import 'features/expenses/presentation/cubit/expense_form_cubit.dart';
+import 'features/expenses/presentation/cubit/expense_list_cubit.dart';
+import 'features/recurring/data/datasources/recurring_remote_datasource.dart';
+import 'features/recurring/data/repositories/recurring_repository_impl.dart';
+import 'features/recurring/presentation/cubit/recurring_form_cubit.dart';
+import 'features/recurring/presentation/cubit/recurring_list_cubit.dart';
 import 'network/dio_client.dart';
 import 'routes/app_router.dart';
 import 'services/secure_storage_service.dart';
@@ -33,13 +51,8 @@ class _AppState extends State<App> {
     _storage = const SecureStorageService(FlutterSecureStorage());
 
     // ── Network setup ──────────────────────────────────────────────────────
-    // Plain Dio (no auth interceptor) — used for the token refresh call
-    // inside AuthInterceptor to avoid interceptor recursion.
     final plainDio = DioClient.plain();
 
-    // Main Dio with AuthInterceptor. The onLogout closure safely captures
-    // `_authBloc` via the late variable — by the time onLogout is ever
-    // called at runtime, _authBloc is already assigned below.
     final mainDio = DioClient.create(
       getAccessToken: _storage.getAccessToken,
       refreshAccessToken: () async {
@@ -63,12 +76,39 @@ class _AppState extends State<App> {
       },
     );
 
-    // ── Auth feature wiring ────────────────────────────────────────────────
+    // ── Auth feature ───────────────────────────────────────────────────────
     final authDataSource = AuthRemoteDataSource(mainDio);
     final authRepository = AuthRepositoryImpl(authDataSource, _storage);
-
     _authBloc = AuthBloc(repository: authRepository, storage: _storage);
-    _appRouter = AppRouter(_authBloc);
+
+    // ── Feature repositories ───────────────────────────────────────────────
+    final categoryDataSource = CategoryRemoteDataSource(mainDio);
+    final categoryRepository = CategoryRepositoryImpl(categoryDataSource);
+
+    final expenseDataSource = ExpenseRemoteDataSource(mainDio);
+    final expenseRepository = ExpenseRepositoryImpl(expenseDataSource);
+
+    final dashboardDataSource = DashboardRemoteDataSource(mainDio);
+    final dashboardRepository = DashboardRepositoryImpl(dashboardDataSource);
+
+    final budgetDataSource = BudgetRemoteDataSource(mainDio);
+    final budgetRepository = BudgetRepositoryImpl(budgetDataSource);
+
+    final recurringDataSource = RecurringRemoteDataSource(mainDio);
+    final recurringRepository = RecurringRepositoryImpl(recurringDataSource);
+
+    // ── Router ─────────────────────────────────────────────────────────────
+    _appRouter = AppRouter.create(
+      authBloc: _authBloc,
+      dashboardCubit: () => DashboardCubit(dashboardRepository),
+      expenseListCubit: () => ExpenseListCubit(expenseRepository),
+      expenseFormCubit: () => ExpenseFormCubit(expenseRepository),
+      categoryCubit: () => CategoryCubit(categoryRepository),
+      budgetListCubit: () => BudgetListCubit(budgetRepository),
+      budgetFormCubit: () => BudgetFormCubit(budgetRepository),
+      recurringListCubit: () => RecurringListCubit(recurringRepository),
+      recurringFormCubit: () => RecurringFormCubit(recurringRepository),
+    );
   }
 
   @override
@@ -88,7 +128,7 @@ class _AppState extends State<App> {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.light, // Phase 4: wire to ThemeCubit
+        themeMode: ThemeMode.light,
         routerConfig: _appRouter.router,
       ),
     );
