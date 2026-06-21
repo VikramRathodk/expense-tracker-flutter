@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../config/app_theme.dart';
+import '../../../../routes/app_routes.dart';
+import '../../../onboarding/onboarding_service.dart';
 import '../bloc/auth_bloc.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -29,8 +32,15 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _controller.forward();
 
-    // Restore session after the first frame so the animation starts immediately
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Check onboarding, then restore session
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final seen = await OnboardingService.isComplete();
+      if (!mounted) return;
+      if (!seen) {
+        context.go(AppRoutes.onboarding);
+        return;
+      }
+      if (!mounted) return;
       context.read<AuthBloc>().add(AuthRestoreSession());
     });
   }

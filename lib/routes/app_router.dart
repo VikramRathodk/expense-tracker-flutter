@@ -23,6 +23,7 @@ import '../features/recurring/presentation/cubit/recurring_form_cubit.dart';
 import '../features/recurring/presentation/cubit/recurring_list_cubit.dart';
 import '../features/recurring/presentation/screens/add_edit_recurring_screen.dart';
 import '../features/recurring/presentation/screens/recurring_list_screen.dart';
+import '../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../features/shell/shell_screen.dart';
 import 'app_routes.dart';
 import 'route_guards.dart';
@@ -67,6 +68,10 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.splash,
         builder: (_, s) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (_, s) => const OnboardingScreen(),
       ),
       GoRoute(
         path: AppRoutes.login,
