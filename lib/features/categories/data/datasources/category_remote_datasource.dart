@@ -20,6 +20,47 @@ class CategoryRemoteDataSource {
     }
   }
 
+  Future<CategoryModel> createCategory({
+    required String name,
+    required String icon,
+    required String color,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        ApiConstants.categories,
+        data: {'name': name, 'icon': icon, 'color': color},
+      );
+      return CategoryModel.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  Future<CategoryModel> updateCategory({
+    required int id,
+    required String name,
+    required String icon,
+    required String color,
+  }) async {
+    try {
+      final response = await _dio.patch<Map<String, dynamic>>(
+        '${ApiConstants.categories}/$id',
+        data: {'name': name, 'icon': icon, 'color': color},
+      );
+      return CategoryModel.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  Future<void> deleteCategory({required int id}) async {
+    try {
+      await _dio.delete<void>('${ApiConstants.categories}/$id');
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
   AppException _mapError(DioException e) {
     final statusCode = e.response?.statusCode;
     final data = e.response?.data;

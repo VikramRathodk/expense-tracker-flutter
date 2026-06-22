@@ -55,6 +55,20 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<UserModel> getMe() => _dataSource.getMe();
 
+  @override
+  Future<UserModel> updateProfile({required String name}) =>
+      _dataSource.updateProfile(name: name);
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) =>
+      _dataSource.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
   Future<void> _persistSession(AuthResponseModel response) {
     return Future.wait([
       _storage.saveAccessToken(response.accessToken),

@@ -8,7 +8,26 @@ class CategoryRepositoryImpl implements CategoryRepository {
   final CategoryRemoteDataSource _dataSource;
 
   @override
-  Future<List<CategoryModel>> getCategories() {
-    return _dataSource.getCategories();
-  }
+  Future<List<CategoryModel>> getCategories() => _dataSource.getCategories();
+
+  @override
+  Future<CategoryModel> createCategory({
+    required String name,
+    required String icon,
+    required String color,
+  }) =>
+      _dataSource.createCategory(name: name, icon: icon, color: color);
+
+  @override
+  Future<CategoryModel> updateCategory({
+    required int id,
+    required String name,
+    required String icon,
+    required String color,
+  }) =>
+      _dataSource.updateCategory(id: id, name: name, icon: icon, color: color);
+
+  @override
+  Future<void> deleteCategory({required int id}) =>
+      _dataSource.deleteCategory(id: id);
 }

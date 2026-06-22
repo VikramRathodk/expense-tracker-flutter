@@ -57,6 +57,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () => context.push(AppRoutes.notifications),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh_outlined),
             onPressed: () => context.read<DashboardCubit>().refresh(),
           ),

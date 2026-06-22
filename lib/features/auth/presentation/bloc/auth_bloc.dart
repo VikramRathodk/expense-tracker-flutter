@@ -32,6 +32,11 @@ class AuthRegisterRequested extends AuthEvent {
 
 class AuthLogoutRequested extends AuthEvent {}
 
+class AuthProfileUpdated extends AuthEvent {
+  AuthProfileUpdated(this.user);
+  final UserModel user;
+}
+
 // ─── States ───────────────────────────────────────────────────────────────────
 
 sealed class AuthState {}
@@ -66,6 +71,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoginRequested>(_onLogin);
     on<AuthRegisterRequested>(_onRegister);
     on<AuthLogoutRequested>(_onLogout);
+    on<AuthProfileUpdated>((event, emit) => emit(AuthAuthenticated(event.user)));
   }
 
   final AuthRepository _repository;

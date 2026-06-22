@@ -2,6 +2,21 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'features/categories/presentation/cubit/category_manage_cubit.dart';
+import 'features/tags/data/datasources/tag_remote_datasource.dart';
+import 'features/tags/data/repositories/tag_repository_impl.dart';
+import 'features/tags/presentation/cubit/tag_cubit.dart';
+import 'features/notifications/data/datasources/notification_remote_datasource.dart';
+import 'features/notifications/data/repositories/notification_repository_impl.dart';
+import 'features/notifications/presentation/cubit/notification_cubit.dart';
+import 'features/reports/data/datasources/report_remote_datasource.dart';
+import 'features/reports/data/repositories/report_repository_impl.dart';
+import 'features/reports/presentation/cubit/report_cubit.dart';
+import 'features/audit_logs/data/datasources/audit_log_remote_datasource.dart';
+import 'features/audit_logs/data/repositories/audit_log_repository_impl.dart';
+import 'features/audit_logs/presentation/cubit/audit_log_cubit.dart';
+import 'features/profile/presentation/cubit/profile_cubit.dart';
+import 'shared/cubits/theme_cubit.dart';
 import 'config/app_theme.dart';
 import 'core/constants/api_constants.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
@@ -40,6 +55,7 @@ class _AppState extends State<App> {
   late final SecureStorageService _storage;
   late final AuthBloc _authBloc;
   late final AppRouter _appRouter;
+  late final ThemeCubit _themeCubit;
 
   @override
   void initState() {
@@ -48,6 +64,7 @@ class _AppState extends State<App> {
   }
 
   void _initialize() {
+    _themeCubit = ThemeCubit();
     _storage = const SecureStorageService(FlutterSecureStorage());
 
     // ── Network setup ──────────────────────────────────────────────────────
@@ -81,6 +98,10 @@ class _AppState extends State<App> {
     final authRepository = AuthRepositoryImpl(authDataSource, _storage);
     _authBloc = AuthBloc(repository: authRepository, storage: _storage);
 
+    // ── Profile cubit factory (shares authRepository) ─────────────────────
+    ProfileCubit makeProfileCubit() =>
+        ProfileCubit(authRepository, _storage);
+
     // ── Feature repositories ───────────────────────────────────────────────
     final categoryDataSource = CategoryRemoteDataSource(mainDio);
     final categoryRepository = CategoryRepositoryImpl(categoryDataSource);
@@ -108,12 +129,22 @@ class _AppState extends State<App> {
       budgetFormCubit: () => BudgetFormCubit(budgetRepository),
       recurringListCubit: () => RecurringListCubit(recurringRepository),
       recurringFormCubit: () => RecurringFormCubit(recurringRepository),
+      profileCubit: makeProfileCubit,
+      categoryManageCubit: () => CategoryManageCubit(categoryRepository),
+      tagCubit: () => TagCubit(TagRepositoryImpl(TagRemoteDataSource(mainDio))),
+      notificationCubit: () => NotificationCubit(
+          NotificationRepositoryImpl(NotificationRemoteDataSource(mainDio))),
+      reportCubit: () => ReportCubit(
+          ReportRepositoryImpl(ReportRemoteDataSource(mainDio))),
+      auditLogCubit: () => AuditLogCubit(
+          AuditLogRepositoryImpl(AuditLogRemoteDataSource(mainDio))),
     );
   }
 
   @override
   void dispose() {
     _authBloc.close();
+    _themeCubit.close();
     super.dispose();
   }
 
@@ -122,14 +153,17 @@ class _AppState extends State<App> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>.value(value: _authBloc),
+        BlocProvider<ThemeCubit>.value(value: _themeCubit),
       ],
-      child: MaterialApp.router(
-        title: 'Expense Tracker',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.light,
-        routerConfig: _appRouter.router,
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, themeMode) => MaterialApp.router(
+          title: 'Expense Tracker',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+          routerConfig: _appRouter.router,
+        ),
       ),
     );
   }

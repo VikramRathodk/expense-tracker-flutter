@@ -11,6 +11,16 @@ import '../features/budgets/presentation/cubit/budget_list_cubit.dart';
 import '../features/budgets/presentation/screens/add_edit_budget_screen.dart';
 import '../features/budgets/presentation/screens/budget_list_screen.dart';
 import '../features/categories/presentation/cubit/category_cubit.dart';
+import '../features/categories/presentation/cubit/category_manage_cubit.dart';
+import '../features/categories/presentation/screens/category_list_screen.dart';
+import '../features/tags/presentation/cubit/tag_cubit.dart';
+import '../features/tags/presentation/screens/tag_list_screen.dart';
+import '../features/notifications/presentation/cubit/notification_cubit.dart';
+import '../features/notifications/presentation/screens/notification_screen.dart';
+import '../features/reports/presentation/cubit/report_cubit.dart';
+import '../features/reports/presentation/screens/report_screen.dart';
+import '../features/audit_logs/presentation/cubit/audit_log_cubit.dart';
+import '../features/audit_logs/presentation/screens/audit_log_screen.dart';
 import '../features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import '../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../features/expenses/domain/models/expense_model.dart';
@@ -24,6 +34,8 @@ import '../features/recurring/presentation/cubit/recurring_list_cubit.dart';
 import '../features/recurring/presentation/screens/add_edit_recurring_screen.dart';
 import '../features/recurring/presentation/screens/recurring_list_screen.dart';
 import '../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../features/profile/presentation/cubit/profile_cubit.dart';
+import '../features/profile/presentation/screens/profile_screen.dart';
 import '../features/shell/shell_screen.dart';
 import 'app_routes.dart';
 import 'route_guards.dart';
@@ -41,6 +53,12 @@ class AppRouter {
     required BudgetFormCubit Function() budgetFormCubit,
     required RecurringListCubit Function() recurringListCubit,
     required RecurringFormCubit Function() recurringFormCubit,
+    required ProfileCubit Function() profileCubit,
+    required CategoryManageCubit Function() categoryManageCubit,
+    required TagCubit Function() tagCubit,
+    required NotificationCubit Function() notificationCubit,
+    required ReportCubit Function() reportCubit,
+    required AuditLogCubit Function() auditLogCubit,
   }) {
     return AppRouter._(
       authBloc,
@@ -53,6 +71,12 @@ class AppRouter {
         budgetFormCubit: budgetFormCubit,
         recurringListCubit: recurringListCubit,
         recurringFormCubit: recurringFormCubit,
+        profileCubit: profileCubit,
+        categoryManageCubit: categoryManageCubit,
+        tagCubit: tagCubit,
+        notificationCubit: notificationCubit,
+        reportCubit: reportCubit,
+        auditLogCubit: auditLogCubit,
       ),
     );
   }
@@ -80,6 +104,43 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.register,
         builder: (_, s) => const RegisterScreen(),
+      ),
+
+      // ── Top-level push routes (shown over the shell) ─────────────────────
+      GoRoute(
+        path: AppRoutes.categories,
+        builder: (context, s) => BlocProvider(
+          create: (_) => _cubits.categoryManageCubit(),
+          child: const CategoryListScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.tags,
+        builder: (context, s) => BlocProvider(
+          create: (_) => _cubits.tagCubit(),
+          child: const TagListScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, s) => BlocProvider(
+          create: (_) => _cubits.notificationCubit(),
+          child: const NotificationScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.reports,
+        builder: (context, s) => BlocProvider(
+          create: (_) => _cubits.reportCubit(),
+          child: const ReportScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.auditLogs,
+        builder: (context, s) => BlocProvider(
+          create: (_) => _cubits.auditLogCubit(),
+          child: const AuditLogScreen(),
+        ),
       ),
 
       // ── Authenticated shell (bottom nav) ──────────────────────────────────
@@ -236,15 +297,14 @@ class AppRouter {
             ],
           ),
 
-          // Tab 3 — Profile (Phase 5 placeholder)
+          // Tab 3 — Profile
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.profile,
-                builder: (_, s) => const _PlaceholderScreen(
-                  title: 'Profile',
-                  subtitle: 'Profile & settings coming in Phase 5.',
-                  icon: Icons.person_outline,
+                builder: (context, s) => BlocProvider(
+                  create: (_) => _cubits.profileCubit(),
+                  child: const ProfileScreen(),
                 ),
               ),
             ],
@@ -265,6 +325,12 @@ class _RouterCubits {
     required this.budgetFormCubit,
     required this.recurringListCubit,
     required this.recurringFormCubit,
+    required this.profileCubit,
+    required this.categoryManageCubit,
+    required this.tagCubit,
+    required this.notificationCubit,
+    required this.reportCubit,
+    required this.auditLogCubit,
   });
 
   final DashboardCubit Function() dashboardCubit;
@@ -275,6 +341,12 @@ class _RouterCubits {
   final BudgetFormCubit Function() budgetFormCubit;
   final RecurringListCubit Function() recurringListCubit;
   final RecurringFormCubit Function() recurringFormCubit;
+  final ProfileCubit Function() profileCubit;
+  final CategoryManageCubit Function() categoryManageCubit;
+  final TagCubit Function() tagCubit;
+  final NotificationCubit Function() notificationCubit;
+  final ReportCubit Function() reportCubit;
+  final AuditLogCubit Function() auditLogCubit;
 }
 
 /// Bridges AuthBloc stream changes to GoRouter's refresh mechanism.
@@ -284,37 +356,4 @@ class _AuthChangeNotifier extends ChangeNotifier {
   }
 }
 
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar:
-          AppBar(title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700))),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 64, color: const Color(0xFFCBD5E1)),
-            const SizedBox(height: 16),
-            Text(
-              subtitle,
-              style: const TextStyle(color: Color(0xFF64748B)),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 

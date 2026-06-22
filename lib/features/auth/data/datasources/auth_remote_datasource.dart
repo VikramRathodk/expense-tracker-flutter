@@ -71,6 +71,35 @@ class AuthRemoteDataSource {
     }
   }
 
+  Future<UserModel> updateProfile({required String name}) async {
+    try {
+      final response = await _dio.patch<Map<String, dynamic>>(
+        ApiConstants.me,
+        data: {'name': name},
+      );
+      return UserModel.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _dio.patch<void>(
+        ApiConstants.mePassword,
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        },
+      );
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
   AppException _mapError(DioException e) {
     final statusCode = e.response?.statusCode;
     final data = e.response?.data;

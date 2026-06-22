@@ -19,4 +19,11 @@ abstract class AuthRepository {
   Future<void> logout();
 
   Future<UserModel> getMe();
+
+  Future<UserModel> updateProfile({required String name});
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
 }
