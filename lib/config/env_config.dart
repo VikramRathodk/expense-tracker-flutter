@@ -10,7 +10,7 @@ class EnvConfig {
   static const _baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     // 10.0.2.2 = host machine from Android emulator; change for physical device
-    defaultValue: 'http://10.0.2.2:8081',
+    defaultValue: 'https://expensetrackerspring-production.up.railway.app',
   );
 
   static const String apiBaseUrl = '$_baseUrl/api/v1';

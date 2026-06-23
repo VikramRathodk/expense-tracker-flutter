@@ -65,7 +65,8 @@ class AuthRemoteDataSource {
   Future<UserModel> getMe() async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(ApiConstants.me);
-      return UserModel.fromJson(response.data!);
+      final payload = _unwrap(response.data!);
+      return UserModel.fromJson(payload);
     } on DioException catch (e) {
       throw _mapError(e);
     }
@@ -77,7 +78,8 @@ class AuthRemoteDataSource {
         ApiConstants.me,
         data: {'name': name},
       );
-      return UserModel.fromJson(response.data!);
+      final payload = _unwrap(response.data!);
+      return UserModel.fromJson(payload);
     } on DioException catch (e) {
       throw _mapError(e);
     }
@@ -135,6 +137,10 @@ class AuthRemoteDataSource {
       _ => ServerException(message: message, statusCode: statusCode),
     };
   }
+
+  /// Unwraps `{ status, message, data: {...} }` envelope if present.
+  Map<String, dynamic> _unwrap(Map<String, dynamic> json) =>
+      json['data'] as Map<String, dynamic>? ?? json;
 
   String? _extractMessage(dynamic data) {
     if (data is Map) return data['message'] as String?;

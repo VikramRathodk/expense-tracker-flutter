@@ -44,6 +44,13 @@ class AuthInterceptor extends Interceptor {
       return;
     }
 
+    // Auth endpoints don't need token refresh — pass the error straight through
+    if (err.requestOptions.path.contains('/auth/login') ||
+        err.requestOptions.path.contains('/auth/register')) {
+      handler.reject(err);
+      return;
+    }
+
     // Avoid refresh loop on the refresh endpoint itself
     if (err.requestOptions.path.contains('/auth/refresh')) {
       await onLogout();

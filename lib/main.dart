@@ -27,6 +27,7 @@ void _setupErrorHandlers() {
   // Catches all other Dart errors (async, isolate, platform channel)
   PlatformDispatcher.instance.onError = (error, stack) {
     if (kDebugMode) {
+
       debugPrint('Unhandled error: $error\n$stack');
     }
     // TODO: forward to Sentry / Firebase Crashlytics in production

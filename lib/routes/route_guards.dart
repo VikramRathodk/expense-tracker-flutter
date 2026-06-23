@@ -11,8 +11,17 @@ String? authGuard(BuildContext context, GoRouterState state) {
 
   final isAuthRoute = loc.startsWith(AppRoutes.login) ||
       loc.startsWith(AppRoutes.register);
-  final isPublic = loc.startsWith(AppRoutes.onboarding) ||
-      loc.startsWith(AppRoutes.splash);
+
+  // Splash: stay until auth resolves, then redirect to the right place.
+  if (loc == AppRoutes.splash) {
+    if (authState is AuthAuthenticated) return AppRoutes.dashboard;
+    if (authState is AuthUnauthenticated || authState is AuthError) {
+      return AppRoutes.login;
+    }
+    return null; // AuthInitial / AuthLoading — keep showing splash
+  }
+
+  final isPublic = loc.startsWith(AppRoutes.onboarding);
 
   if (isPublic) return null;
   if (!isAuthenticated && !isAuthRoute) return AppRoutes.login;
