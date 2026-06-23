@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../../config/app_theme.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/category_chip.dart';
 import '../../../../shared/widgets/currency_selector.dart';
 import '../../../../shared/widgets/tag_chip.dart';
 import '../../../categories/domain/models/category_model.dart';
@@ -33,6 +32,7 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
   late DateTime _date;
   CategoryModel? _selectedCategory;
   List<String> _tags = [];
+  bool _showCategoryError = false;
 
   bool get _isEdit => widget.expense != null;
 
@@ -165,30 +165,52 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // Category picker
+              // Category selector
               BlocBuilder<CategoryCubit, CategoryState>(
                 builder: (context, state) {
+                  final categories =
+                      state is CategoryLoaded ? state.categories : <CategoryModel>[];
                   if (state is CategoryLoaded) {
-                    _resolveInitialCategory(state.categories);
-                    return _CategoryPicker(
-                      categories: state.categories,
-                      selected: _selectedCategory,
-                      onSelect: (cat) =>
-                          setState(() => _selectedCategory = cat),
-                    );
+                    _resolveInitialCategory(categories);
                   }
-                  return const SizedBox.shrink();
+                  return InkWell(
+                    onTap: categories.isEmpty
+                        ? null
+                        : () => _pickCategory(categories),
+                    borderRadius: BorderRadius.circular(12),
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Category',
+                        prefixIcon: _selectedCategory != null
+                            ? Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Icon(
+                                  _selectedCategory!.iconData,
+                                  size: 18,
+                                  color: _selectedCategory!.displayColor,
+                                ),
+                              )
+                            : const Icon(Icons.category_outlined, size: 18),
+                        suffixIcon: const Icon(Icons.arrow_drop_down),
+                        errorText: _showCategoryError && _selectedCategory == null
+                            ? 'Please select a category'
+                            : null,
+                      ),
+                      isEmpty: _selectedCategory == null,
+                      child: _selectedCategory != null
+                          ? Text(
+                              _selectedCategory!.name,
+                              style: const TextStyle(fontSize: 14),
+                            )
+                          : const Text(
+                              'Select a category',
+                              style: TextStyle(
+                                  fontSize: 14, color: Color(0xFF94A3B8)),
+                            ),
+                    ),
+                  );
                 },
               ),
-              if (_selectedCategory == null)
-                const Padding(
-                  padding: EdgeInsets.only(top: 4, left: 12),
-                  child: Text(
-                    'Please select a category',
-                    style: TextStyle(
-                        fontSize: 12, color: AppColors.error),
-                  ),
-                ),
               const SizedBox(height: AppSpacing.md),
 
               // Tags
@@ -237,10 +259,30 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
     if (picked != null) setState(() => _date = picked);
   }
 
+  Future<void> _pickCategory(List<CategoryModel> categories) async {
+    final picked = await showModalBottomSheet<CategoryModel>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _CategoryPickerSheet(
+        categories: categories,
+        selected: _selectedCategory,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedCategory = picked;
+        _showCategoryError = false;
+      });
+    }
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
-      setState(() {}); // trigger error text re-render
+      setState(() => _showCategoryError = true);
       return;
     }
 
@@ -263,46 +305,114 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
   }
 }
 
-// ─── Category picker ─────────────────────────────────────────────────────────
+// ─── Category picker bottom sheet ────────────────────────────────────────────
 
-class _CategoryPicker extends StatelessWidget {
-  const _CategoryPicker({
-    required this.categories,
-    required this.selected,
-    required this.onSelect,
-  });
+class _CategoryPickerSheet extends StatelessWidget {
+  const _CategoryPickerSheet({required this.categories, this.selected});
 
   final List<CategoryModel> categories;
   final CategoryModel? selected;
-  final ValueChanged<CategoryModel> onSelect;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Category',
-          style: Theme.of(context)
-              .textTheme
-              .labelMedium
-              ?.copyWith(color: const Color(0xFF64748B)),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: categories
-              .map(
-                (cat) => CategoryChip(
-                  category: cat,
-                  isSelected: selected?.id == cat.id,
-                  onTap: () => onSelect(cat),
-                ),
-              )
-              .toList(),
-        ),
-      ],
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      maxChildSize: 0.9,
+      minChildSize: 0.4,
+      expand: false,
+      builder: (_, controller) => Column(
+        children: [
+          const SizedBox(height: AppSpacing.sm),
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFCBD5E1),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Select Category',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Expanded(
+            child: GridView.builder(
+              controller: controller,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md),
+              gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: AppSpacing.sm,
+                mainAxisSpacing: AppSpacing.sm,
+                childAspectRatio: 1.0,
+              ),
+              itemCount: categories.length,
+              itemBuilder: (_, i) {
+                final cat = categories[i];
+                final isSelected = selected?.id == cat.id;
+                final color = cat.displayColor;
+                return GestureDetector(
+                  onTap: () => Navigator.of(context).pop(cat),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? color
+                          : color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: isSelected
+                          ? null
+                          : Border.all(
+                              color: color.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          cat.iconData,
+                          color:
+                              isSelected ? Colors.white : color,
+                          size: 28,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          cat.name,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected
+                                ? Colors.white
+                                : color,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+      ),
     );
   }
 }

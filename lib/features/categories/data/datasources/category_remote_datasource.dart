@@ -11,8 +11,9 @@ class CategoryRemoteDataSource {
 
   Future<List<CategoryModel>> getCategories() async {
     try {
-      final response = await _dio.get<List<dynamic>>(ApiConstants.categories);
-      return (response.data ?? [])
+      final response = await _dio.get<Map<String, dynamic>>(ApiConstants.categories);
+      final list = response.data?['data'] as List<dynamic>? ?? [];
+      return list
           .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
@@ -30,7 +31,9 @@ class CategoryRemoteDataSource {
         ApiConstants.categories,
         data: {'name': name, 'icon': icon, 'color': color},
       );
-      return CategoryModel.fromJson(response.data!);
+      final body = response.data!;
+      return CategoryModel.fromJson(
+          body.containsKey('data') ? body['data'] as Map<String, dynamic> : body);
     } on DioException catch (e) {
       throw _mapError(e);
     }
@@ -47,7 +50,9 @@ class CategoryRemoteDataSource {
         '${ApiConstants.categories}/$id',
         data: {'name': name, 'icon': icon, 'color': color},
       );
-      return CategoryModel.fromJson(response.data!);
+      final body = response.data!;
+      return CategoryModel.fromJson(
+          body.containsKey('data') ? body['data'] as Map<String, dynamic> : body);
     } on DioException catch (e) {
       throw _mapError(e);
     }

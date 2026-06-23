@@ -66,13 +66,29 @@ class CategoryModel {
   };
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
+    final id = (json['id'] as num).toInt();
+    final name = json['name'] as String? ?? '';
+    final iconKey =
+        json['icon'] as String? ?? name.toLowerCase().replaceAll(' ', '_');
+    final color = json['color'] as String? ?? _paletteColor(id);
+    final isSystem = json['isSystem'] as bool? ??
+        json['isGlobal'] as bool? ??
+        false;
     return CategoryModel(
-      id: (json['id'] as num).toInt(),
-      name: json['name'] as String,
-      icon: json['icon'] as String? ?? 'category',
-      color: json['color'] as String? ?? '#6366F1',
-      isSystem: json['isSystem'] as bool? ?? false,
+      id: id,
+      name: name,
+      icon: iconKey,
+      color: color,
+      isSystem: isSystem,
     );
+  }
+
+  static String _paletteColor(int id) {
+    const palette = [
+      '#6366F1', '#EC4899', '#F59E0B', '#10B981', '#3B82F6',
+      '#8B5CF6', '#EF4444', '#14B8A6', '#F97316', '#06B6D4',
+    ];
+    return palette[id % palette.length];
   }
 
   Map<String, dynamic> toJson() => {
